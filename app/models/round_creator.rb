@@ -6,26 +6,55 @@ class RoundCreator
   end
 
   def create
-    @round = Round.create(pool: @pool)
+    ordered_participants.each do |participant|
+      next if round.reload.participants.include?(participant)
+      partner = find_partner_for(participant)
+      if partner.present?
+        round.groupings.create(participants: [participant, partner])
+      else
+        remainders.push(participant)
+      end
+    end
 
-    sliced_participants.reverse.each { |participants|  @round.groupings.create(participants: participants) }
-    @round
+    if remainders.any?
+      remainders.each do |participant|
+        grouping = find_grouping_for(participant)
+        grouping.participants << participant if grouping.present?
+      end
+    end
+    round
   end
 
   private
 
-  def sliced_participants
-    return [] unless randomised_participants.present?
-    slice = randomised_participants.each_slice(2).to_a
-    if slice.last.size == 1
-      slice.first << slice.pop
-      slice.first&.flatten!
-    end
-    slice
+  def round
+    @round ||= Round.create(pool: @pool)
   end
 
-  def randomised_participants
-    @rand ||= available_participants.shuffle
+  def remainders
+    @remainders ||= []
+  end
+
+  def find_partner_for(participant)
+    options = participant.pairable_with(round) - round.reload.participants
+    options.shuffle.first
+  end
+
+  def find_grouping_for(participant)
+    round.groupings.each do | grouping |
+      next unless grouping_available_for_participant(grouping, participant)
+      return grouping
+    end
+  end
+
+  def grouping_available_for_participant(grouping, participant)
+    (grouping.participants & participant.pairable_with(round)).empty?
+  end
+
+
+  def ordered_participants
+    # Could this be faster with DB query?
+    available_participants.sort_by { |participant| participant.number_of_filters }
   end
 
   def available_participants
