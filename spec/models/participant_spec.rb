@@ -8,6 +8,10 @@ describe Participant do
   it { should have_many(:pools).through(:pool_entries) }
   it { should have_and_belong_to_many(:groupings) }
 
+  it { should have_many(:exclusions).with_foreign_key(:excluder) }
+  it { should have_many(:excluders).through(:exclusions) }
+  it { should have_many(:excluded_participants).through(:exclusions) }
+
   describe "validations" do
     it { should validate_presence_of(:slack_user_id) }
     it { should validate_uniqueness_of(:slack_user_id) }
@@ -103,7 +107,7 @@ describe Participant do
       allow(participant).to receive(:slack_user).and_return(slack_user)
     end
 
-    it { is_expected.to eq slack_user.real_name }
+    it { is_expected.to eq "*#{slack_user.real_name}*" }
   end
 
   describe "#in_pool?" do
