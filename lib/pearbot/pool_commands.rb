@@ -1,6 +1,29 @@
 module Pearbot
   module PoolCommands
 
+    class Hello < PearbotCommand
+      command /hi/
+      command /hello/
+
+      help do
+        title 'Hello'
+        desc 'Say hello to Pearbot'
+      end
+      def self.call(client, data, match)
+        conversation = self.conversation(data.channel)
+        pool = ::Pool.find_by(slack_channel_id: data.channel)
+
+        if conversation.is_channel? && pool.nil?
+          message = "Hello <##{data.channel}> \n\n"
+          message += "Did you want my help to set up automatic pairings? If so, just type `@pearbot setup` to get started."
+        else
+          message = "Hello there <@#{data.user}>"
+        end
+
+        client.say(channel: data.channel, text: message, gif: "hello")
+      end
+    end
+
     class Setup < PearbotCommand
       command /setup/
 
@@ -14,8 +37,10 @@ module Pearbot
 
         if pool.save
           pool.load_participants
-          message = "✨ I set up a new pairing pool for <##{data.channel}> with #{pool.participants.count} participants.✨"
-          message += "\n> #{Participant.name_list(pool.participants)}" if pool.participants.any?
+          message = "✨ Okay, I set up <##{data.channel}> for pairings, with #{pool.participants.count} participants.\n>\n>"
+          message += "You can set up regular pairing rounds using slack reminders, like so:\n>"
+          message += "`/remind <##{data.channel}>  “@pearbot pair” every 2 weeks`\n>\n>"
+          message += "Try `/remind help` if you get stuck."
           client.say(channel: data.channel, text: message, gif: 'hello')
 
         else
@@ -33,7 +58,7 @@ module Pearbot
       end
 
       def self.call(client, data, match)
-        pool = ::Pool.find_by(slack_channel_id: data.channel)
+        pool = ::Pool.new(slack_channel_id: data.channel)
 
         if pool.present?
           pool.refresh_participants
