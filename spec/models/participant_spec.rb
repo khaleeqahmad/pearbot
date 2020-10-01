@@ -107,7 +107,7 @@ describe Participant do
       allow(participant).to receive(:slack_user).and_return(slack_user)
     end
 
-    it { is_expected.to eq slack_user.real_name }
+    it { is_expected.to eq "*#{slack_user.real_name}*" }
   end
 
   describe "#in_pool?" do

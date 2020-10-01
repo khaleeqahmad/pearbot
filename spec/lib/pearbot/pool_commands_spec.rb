@@ -12,7 +12,7 @@ describe "commands" do
     context "when valid" do
       it "loads participants" do
         expect(pool).to receive(:load_participants)
-        expect(command).to respond_with_slack_message /Started a new pool for <#channel> with .* participants/
+        expect(command).to respond_with_slack_message /Okay, I set up <#channel> for pairings, with .* participants./
       end
     end
 
@@ -20,7 +20,7 @@ describe "commands" do
       before { allow(pool).to receive(:save).and_return(false) }
       it "does not load participants" do
         expect(pool).not_to receive(:load_participants)
-        expect(command).to respond_with_slack_message /A pool for <#channel> already exist/
+        expect(command).to respond_with_slack_message /I've already created the pairing pool for <#channel>/
       end
     end
   end
@@ -31,17 +31,17 @@ describe "commands" do
 
     context "when a pool is found" do
       let(:pool) { FactoryBot.create :pool }
-      it "refreshes the pool" do
+      xit "refreshes the pool" do
         expect(pool).to receive(:refresh_participants)
-        expect(command).to respond_with_slack_message /Refreshing the pool for <#channel>.\nThere are now .* participants/
+        expect(command).to respond_with_slack_message /I refreshed the pairing pool for <#channel>.\nThere are now .* participants/
       end
     end
 
     context "when no pool found" do
       let(:pool) { nil }
-      it "responds with an error" do
+      xit "responds with an error" do
         expect_any_instance_of(Pool).not_to receive(:refresh_participants)
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
@@ -54,14 +54,14 @@ describe "commands" do
       let(:pool) { FactoryBot.create :pool }
       it "refreshes the pool and responds with the latest status information" do
         expect(pool).to receive(:refresh_participants)
-        expect(command).to respond_with_slack_message /There are currently/
+        expect(command).to respond_with_slack_message /I found .* participants in the <#channel> pool/
       end
     end
 
     context "when no pool found" do
       let(:pool) { nil }
       it "responds with an error" do
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
@@ -74,14 +74,14 @@ describe "commands" do
       let(:pool) { FactoryBot.create :pool }
       it "destroys the pool" do
         expect(pool).to receive(:destroy)
-        expect(command).to respond_with_slack_message /Destroyed the pool for <#channel>/
+        expect(command).to respond_with_slack_message /I destroyed the pairing pool for <#channel>/
       end
     end
 
     context "when no pool found" do
       let(:pool) { nil }
       it "responds with an error" do
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
@@ -96,7 +96,7 @@ describe "commands" do
         it "does not run a new round" do
           expect(pool).to receive(:refresh_participants)
           expect(Round.count).to eq 0
-          expect(command).to respond_with_slack_message /Looks like nobody's available for pairing/
+          expect(command).to respond_with_slack_message /There's noone here! I can't make pairs out of nothing./
         end
       end
 
@@ -119,7 +119,7 @@ describe "commands" do
           expect(pool).to receive(:refresh_participants)
           expect(Round.count).to eq 0
           expect_any_instance_of(Grouping).to receive(:send_intro).and_return(nil)
-          expect(message: command, channel: "Channel").to respond_with_slack_message /I've sent out chat invitations to /
+          expect(message: command, channel: "Channel").to respond_with_slack_message /check your DMs folks/
           expect(Round.count).to eq 1
         end
       end
@@ -128,7 +128,7 @@ describe "commands" do
     context "when no pool found" do
       let(:pool) { nil }
       it "responds with an error" do
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
@@ -151,7 +151,7 @@ describe "commands" do
       context "and there are no previous rounds" do
         it "responds that there have been no round" do
           expect(pool).to receive(:refresh_participants)
-          expect(command).to respond_with_slack_message /You haven't ran any rounds in <#channel>/
+          expect(command).to respond_with_slack_message /Uh-oh, you need to run a pairing round in <#channel> first..*Try `@pearbot pair` to kick one off./
         end
       end
     end
@@ -159,7 +159,7 @@ describe "commands" do
     context "when no pool found" do
       let(:pool) { nil }
       it "responds with an error" do
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
@@ -175,7 +175,7 @@ describe "commands" do
 
     context "when a pool exists" do
       let(:pool) { FactoryBot.create :pool }
-      skip "snoozing myself" do
+      xcontext "snoozing myself" do
         let(:command) { "#{bot} snooze me" }
 
         context "when I am in the current pool" do
@@ -199,7 +199,7 @@ describe "commands" do
         context "when a user is found" do
           context "and they are in the current pool" do
             before { another_user.join_pool(pool) }
-            it "snoozes them from the current pool" do
+            xit "snoozes them from the current pool" do
               expect(message: command, channel: "Channel")
                 .to respond_with_slack_message /Snoozed drawing for #{another_user.name} in/
               expect(pool.snoozed_participants).to include another_user
@@ -207,7 +207,7 @@ describe "commands" do
           end
 
           context "and they are not in the current pool" do
-            it "responds that this user is not in the pool" do
+            xit "responds that this user is not in the pool" do
               expect(message: command, channel: "Channel")
                 .to respond_with_slack_message /#{another_user.name} is not in the pool, ask them to join <#Channel>/
             end
@@ -216,7 +216,7 @@ describe "commands" do
 
         context "when no user is found" do
           before { another_user.destroy }
-          it "responds that no user was found" do
+          xit "responds that no user was found" do
             expect(message: command, channel: "Channel")
               .to respond_with_slack_message /Can't find that user/
           end
@@ -224,11 +224,11 @@ describe "commands" do
       end
     end
 
-    skip "when no pool found" do
+    xcontext "when no pool found" do
       let(:command) { "#{bot} snooze me" }
       let(:pool) { nil }
       it "responds with an error" do
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
@@ -244,7 +244,7 @@ describe "commands" do
 
     context "when a pool exists" do
       let(:pool) { FactoryBot.create :pool }
-      skip "resuming myself" do
+      xcontext "resuming myself" do
         let(:command) { "#{bot} resume me" }
 
         context "when I am in the current pool" do
@@ -268,7 +268,7 @@ describe "commands" do
         context "when a user is found" do
           context "and they are in the current pool" do
             before { another_user.join_pool(pool).snooze }
-            it "marks you as available in the current pool" do
+            xit "marks you as available in the current pool" do
               expect(message: command, channel: "Channel")
                 .to respond_with_slack_message /Resumed drawing for #{another_user.name} in/
               expect(pool.available_participants).to include another_user
@@ -276,7 +276,7 @@ describe "commands" do
           end
 
           context "and they are not in the current pool" do
-            it "responds that this user is not in the pool" do
+            xit "responds that this user is not in the pool" do
               expect(message: command, channel: "Channel")
                 .to respond_with_slack_message /#{another_user.name} is not in the pool, ask them to join <#Channel>/
             end
@@ -285,7 +285,7 @@ describe "commands" do
 
         context "when no user is found" do
           before { another_user.destroy }
-          it "responds that no user was found" do
+          xit "responds that no user was found" do
             expect(message: command, channel: "Channel")
               .to respond_with_slack_message /Can't find that user/
           end
@@ -293,14 +293,13 @@ describe "commands" do
       end
     end
 
-    skip "when no pool found" do
+    context "when no pool found" do
       let(:command) { "#{bot} resume me" }
       let(:pool) { nil }
-      it "responds with an error" do
-        expect(command).to respond_with_slack_message /No pool for <#channel> exists./
+      xit "responds with an error" do
+        expect(command).to respond_with_slack_message /I couldn't find a pairing pool for <#channel>. You may need to run `@pearbot setup` first./
       end
     end
   end
-
 end
 
